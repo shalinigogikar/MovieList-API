@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState,useRef,useEffect } from "react";
 
 export default function MoviesList() {
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
+ const[error,setError]=useState(null);
+ const retryRef=useRef(null);
   const fetchMovies = async () => {
-    setIsLoading(true); 
+    setIsLoading(true);
+    setError(null); 
     try {
       const response = await fetch("https://swapi.dev/api/films");
       
@@ -18,16 +20,26 @@ export default function MoviesList() {
 
       if (Array.isArray(data.results) && data.results.length > 0) {
         setMovies(data.results);
+        clearInterval(retryRef.current);
       } else {
         setMovies([]); 
       }
     } catch (error) {
       console.error("Error fetching movies:", error);
       setMovies([]); 
+      setError("something went Wrong...Retrying");
+      retryRef.current=setTimeout("fetchMovies",500);
     } finally {
       setIsLoading(false); 
     }
   };
+  const cancelRetry = () => {
+    clearTimeout(retryRef.current);
+    setError("Retrying stopped by user.");
+  };
+  useEffect(() => {
+    return () => clearTimeout(retryRef.current); 
+  }, []);
 
   return (
     <div className="flex flex-col items-center space-y-4 p-4">
@@ -38,7 +50,17 @@ export default function MoviesList() {
       >
         {isLoading ? "Loading Movies..." : "Fetch Movies"}
       </button>
-
+      {error && (
+        <div className="text-red-500">
+          {error}
+          <button
+            onClick={cancelRetry}
+            className="ml-2 px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-700"
+          >
+            Cancel Retry
+          </button>
+        </div>
+      )}
       {isLoading && (
         <div className="border-4 border-t-4 border-blue-500 rounded-full w-10 h-10 animate-spin"></div>
       )}
