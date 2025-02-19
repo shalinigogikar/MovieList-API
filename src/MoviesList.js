@@ -4,6 +4,11 @@ export default function MoviesList() {
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
  const[error,setError]=useState(null);
+ const [newMovie, setNewMovie] = useState({
+  title: "",
+  director: "",
+  release_date: "",
+});
   const fetchMovies = useCallback(async () => {
     setIsLoading(true);
     setError(null); 
@@ -32,6 +37,34 @@ export default function MoviesList() {
   useEffect(() => {
     fetchMovies(); 
   }, [fetchMovies]);
+  const handleInputChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setNewMovie((prev) => ({ ...prev, [name]: value }));
+  }, []);
+  const handleAddMovie = useCallback(
+    (e) => {
+      e.preventDefault();
+
+      if (!newMovie.title || !newMovie.director || !newMovie.release_date) {
+        alert("Please fill in all fields.");
+        return;
+      }
+      const newMovieObj = {
+        episode_id: movies.length + 1, // Generate a unique ID
+        title: newMovie.title,
+        director: newMovie.director,
+        release_date: newMovie.release_date,
+      };
+
+
+      console.log("New Movie Object:", newMovieObj);
+      setMovies((prevMovies) => [...prevMovies, newMovieObj]);
+
+      // Clear the form after submission
+      setNewMovie({ title: "", director: "", release_date: "" });
+    },
+    [newMovie,movies]
+  );
   const movieList = useMemo(
     () =>
       movies.map((movie) => (
@@ -43,7 +76,43 @@ export default function MoviesList() {
         )),[movies]);
 
   return (
-    <div className="flex flex-col items-center space-y-4 p-4">
+    <div className="flex flex-col items-center space-y-6 p-6">
+      {/* Add Movie Form */}
+      <form
+        onSubmit={handleAddMovie}
+        className="p-4 border rounded-lg bg-gray-100 shadow-lg w-full max-w-md"
+      >
+        <h2 className="text-lg font-semibold text-center mb-4">Add a Movie</h2>
+        <input
+          type="text"
+          name="title"
+          value={newMovie.title}
+          onChange={handleInputChange}
+          placeholder="Movie Title"
+          className="w-full p-2 mb-2 border rounded-md"
+        />
+        <input
+          type="text"
+          name="director"
+          value={newMovie.director}
+          onChange={handleInputChange}
+          placeholder="Director"
+          className="w-full p-2 mb-2 border rounded-md"
+        />
+        <input
+          type="date"
+          name="release_date"
+          value={newMovie.release_date}
+          onChange={handleInputChange}
+          className="w-full p-2 mb-4 border rounded-md"
+        />
+        <button
+          type="submit"
+          className="w-full p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Add Movie
+        </button>
+      </form>
       {error && (
         <div className="text-red-500">
           {error}
